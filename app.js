@@ -83,8 +83,8 @@ function segPolys(w,h,t){
   return { a:H(e,w-e,e), g:H(e,w-e,m), d:H(e,w-e,h-e), f:V(e,e,m), b:V(w-e,e,m), e:V(e,m,h-e), c:V(w-e,m,h-e) };
 }
 function drawDigit(ctx,x,y,w,h,ch,color,ghost){
-  const t = Math.max(1, w*0.2), skew = 0.12;
-  const polys = segPolys(w,h,t*0.85);
+  const t = Math.max(1, w*0.26), skew = 0;
+  const polys = segPolys(w,h,t*0.9);
   const on = SEG[ch] ?? '';
   ctx.save();
   ctx.translate(x + skew*h, y);
@@ -115,8 +115,8 @@ function drawLCD(ctx,W,H,model,color,ghost){
   const lbl = (txt,x,y,size) => { ctx.save(); ctx.globalAlpha=.9; ctx.fillStyle=color; ctx.font=`700 ${size}px Archivo, sans-serif`; ctx.fillText(txt,x,y); ctx.restore(); };
   // fractional layout of the LCD window, tuned to resemble each module
   const L = model === 'A158'
-    ? { day:[.07,.08,.24,.26], date:[.64,.08,.24,.26], hm:[.07,.42,.68,.48], ss:[.79,.56,.15,.34], col:.42, pm:[.04,.43] }
-    : { day:[.08,.08,.22,.27], date:[.66,.08,.22,.27], hm:[.09,.42,.66,.49], ss:[.79,.57,.15,.34], col:.42, pm:[.04,.44] };
+    ? { day:[.33,.08,.24,.27], date:[.69,.08,.24,.27], hm:[.07,.42,.68,.48], ss:[.79,.56,.15,.34], pm:[.07,.10] }
+    : { day:[.34,.08,.22,.27], date:[.70,.08,.22,.27], hm:[.08,.42,.66,.49], ss:[.79,.57,.15,.34], pm:[.08,.10] };
   const R = a => [a[0]*W, a[1]*H, a[2]*W, a[3]*H];
   drawText(ctx, p.day, ...R(L.day), color, ghost);
   drawText(ctx, p.date, ...R(L.date), color, ghost);
@@ -126,13 +126,12 @@ function drawLCD(ctx,W,H,model,color,ghost){
   drawText(ctx, p.mm, hx+hw-half, hy, half, hh, color, ghost);
   // colon
   ctx.save(); ctx.fillStyle=color; ctx.globalAlpha=.92;
-  const cx = hx + hw/2 + hh*0.06, r = Math.max(1,hh*0.06);
-  ctx.fillRect(cx-r, hy+hh*0.28-r, 2*r, 2*r); ctx.fillRect(cx-r-hh*.06, hy+hh*0.70-r, 2*r, 2*r);
+  const cx = hx + hw/2, r = Math.max(1,hh*0.065);
+  ctx.fillRect(cx-r, hy+hh*0.28-r, 2*r, 2*r); ctx.fillRect(cx-r, hy+hh*0.70-r, 2*r, 2*r);
   ctx.restore();
   drawText(ctx, p.ss, ...R(L.ss), color, ghost);
   ctx.textBaseline='top';
-  if (p.pm) lbl('PM', L.pm[0]*W - 0.02*W, L.pm[1]*H, Math.max(6,H*0.09));
-  lbl('24H', .40*W, .12*H, Math.max(5,H*0.07));
+  lbl(p.pm ? 'PM' : 'AM', L.pm[0]*W, L.pm[1]*H, Math.max(6,H*0.13));
 }
 
 // ---------- cell rendering ----------
