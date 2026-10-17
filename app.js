@@ -217,18 +217,23 @@ function refreshCell(i){
   const c = d.querySelector('canvas');
   const dpr = Math.min(2, window.devicePixelRatio||1);
   const W = Math.round(S.cw*pxPerMm*dpr), H = Math.round(S.ch*pxPerMm*dpr);
-  c.width = W; c.height = H;
+  if (c.width!==W || c.height!==H){ c.width = W; c.height = H; }
   const cell = S.cells[i];
   renderCell(cell, c.getContext('2d'), W, H, { digits: S.showDigits && cell.fill!=='none' });
   d.classList.toggle('filled', cell.fill!=='none');
   d.classList.toggle('sel', selected.has(i));
   d.classList.toggle('active', i===active);
 }
+function redrawCellCanvas(i){
+  const c = paperEl.querySelector(`.cell[data-i="${i}"] canvas`); if (!c || !c.width) return;
+  renderCell(S.cells[i], c.getContext('2d'), c.width, c.height, { digits: S.showDigits && S.cells[i].fill!=='none' });
+}
 function refreshAll(){
   const n = paperEl.querySelectorAll('.cell').length;
   for (let i=0;i<n;i++) refreshCell(i);
   drawPreview();
-  $('sel-count').textContent = selected.size > 1 ? `${selected.size} selected` : `#${active+1}`;
+  const label = selected.size > 1 ? `${selected.size} selected` : `#${active+1}`;
+  if ($('sel-count').textContent !== label) $('sel-count').textContent = label;
 }
 function onCellClick(i,e){
   if (e.shiftKey || e.ctrlKey || e.metaKey){
@@ -382,8 +387,11 @@ function init(){
     document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id==='view-'+t.dataset.view));
   });
   window.addEventListener('resize', ()=>{ clearTimeout(init._r); init._r=setTimeout(buildSheet,150); });
-  // keep digits ticking like a real watch
-  setInterval(()=>{ if (S.showDigits || $('preview-digits').checked) refreshAll(); }, 1000);
+  // keep digits ticking like a real watch — canvases only, no DOM/layout changes
+  setInterval(()=>{
+    if (S.showDigits) S.cells.forEach((c,i)=>{ if (c.fill!=='none') redrawCellCanvas(i); });
+    if ($('preview-digits').checked) drawPreview();
+  }, 1000);
 
   buildSheet(); syncControls();
 }

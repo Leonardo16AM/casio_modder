@@ -24,8 +24,8 @@ button,input,select{font:inherit;color:inherit}
 main{padding-top:6px}
 .view{display:none}
 .view.active{display:grid}
-#view-sheet{grid-template-columns:260px 1fr 340px;min-height:calc(100vh - 66px)}
-.panel{background:var(--panel);padding:16px;border-right:1px solid var(--line);overflow:auto;max-height:calc(100vh - 66px)}
+#view-sheet{grid-template-columns:260px 1fr 340px;height:calc(100vh - 66px)}
+.panel{background:var(--panel);padding:16px;border-right:1px solid var(--line);overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;min-height:0}
 .panel.right{border-right:0;border-left:1px solid var(--line)}
 h2{font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin:18px 0 10px;font-weight:800;display:flex;align-items:center;gap:8px}
 h2:first-child{margin-top:0}
@@ -59,10 +59,10 @@ button.primary:hover{filter:brightness(1.1)}
 .btns{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .btns.wide button{flex:1}
 
-.stage{display:flex;flex-direction:column;min-width:0;padding:12px}
+.stage{display:flex;flex-direction:column;min-width:0;min-height:0;padding:12px}
 .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .spacer{flex:1}
-.paper-wrap{flex:1;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:16px;background:repeating-linear-gradient(45deg,#101012 0 10px,#0d0d0f 10px 20px);border:1px solid var(--line);border-radius:var(--radius)}
+.paper-wrap{flex:1;min-height:0;overflow:auto;scrollbar-gutter:stable;display:flex;justify-content:center;align-items:flex-start;padding:16px;background:repeating-linear-gradient(45deg,#101012 0 10px,#0d0d0f 10px 20px);border:1px solid var(--line);border-radius:var(--radius)}
 .paper{background:#fff;position:relative;box-shadow:0 10px 40px rgba(0,0,0,.6);flex:none}
 .cell{position:absolute;cursor:pointer;outline:1px dashed #bbb;background:#f6f6f6}
 .cell canvas{width:100%;height:100%;display:block}
@@ -93,7 +93,8 @@ button.primary:hover{filter:brightness(1.1)}
 .disclaimer{color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:12px;margin-top:32px}
 
 @media (max-width:1100px){
-  #view-sheet{grid-template-columns:1fr}
+  #view-sheet{grid-template-columns:1fr;height:auto}
+  .paper-wrap{max-height:80vh}
   .panel{max-height:none;border:0;border-bottom:1px solid var(--line)}
   .panel.left{order:1}.stage{order:2}.panel.right{order:3}
 }
