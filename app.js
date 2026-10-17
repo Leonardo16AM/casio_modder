@@ -76,11 +76,12 @@ function grid(){
 const SEG = { '0':'abcdef','1':'bc','2':'abged','3':'abgcd','4':'fgbc','5':'afgcd','6':'afgedc','7':'abc','8':'abcdefg','9':'abcdfg',
   'A':'abcefg','S':'afgcd','U':'bcdef','T':'fged','H':'bcefg','F':'aefg','M':'abcef','W':'bcdef','R':'eg','P':'abefg','O':'abcdef','E':'adefg',' ':'' };
 function segPolys(w,h,t){
-  const e = t/2, m = h/2;
+  const e = t/2, m = h/2, g = t*0.12;
   // each segment: polygon in local unit box (w × h), hexagonal ends
-  const H = (x1,x2,y) => [[x1+e,y],[x1+t,y-e],[x2-t,y-e],[x2-e,y],[x2-t,y+e],[x1+t,y+e]];
-  const V = (x,y1,y2) => [[x,y1+e],[x+e,y1+t],[x+e,y2-t],[x,y2-e],[x-e,y2-t],[x-e,y1+t]];
-  return { a:H(e,w-e,e), g:H(e,w-e,m), d:H(e,w-e,h-e), f:V(e,e,m), b:V(w-e,e,m), e:V(e,m,h-e), c:V(w-e,m,h-e) };
+  // tips of neighbouring segments meet on the stroke centre-line, separated only by a thin gap g
+  const H = (y) => [[e+g,y],[t+g,y-e],[w-t-g,y-e],[w-e-g,y],[w-t-g,y+e],[t+g,y+e]];
+  const V = (x,y1,y2) => [[x,y1+g],[x+e,y1+e+g],[x+e,y2-e-g],[x,y2-g],[x-e,y2-e-g],[x-e,y1+e+g]];
+  return { a:H(e), g:H(m), d:H(h-e), f:V(e,e,m), b:V(w-e,e,m), e:V(e,m,h-e), c:V(w-e,m,h-e) };
 }
 function drawDigit(ctx,x,y,w,h,ch,color,ghost){
   const t = Math.max(1, w*0.26), skew = 0;
@@ -115,8 +116,8 @@ function drawLCD(ctx,W,H,model,color,ghost){
   const lbl = (txt,x,y,size) => { ctx.save(); ctx.globalAlpha=.9; ctx.fillStyle=color; ctx.font=`700 ${size}px Archivo, sans-serif`; ctx.fillText(txt,x,y); ctx.restore(); };
   // fractional layout of the LCD window, tuned to resemble each module
   const L = model === 'A158'
-    ? { day:[.33,.08,.24,.27], date:[.69,.08,.24,.27], hm:[.07,.42,.68,.48], ss:[.79,.56,.15,.34], pm:[.07,.10] }
-    : { day:[.34,.08,.22,.27], date:[.70,.08,.22,.27], hm:[.08,.42,.66,.49], ss:[.79,.57,.15,.34], pm:[.08,.10] };
+    ? { day:[.33,.08,.24,.27], date:[.69,.08,.24,.27], hm:[.07,.42,.68,.48], ss:[.79,.56,.15,.34], pm:[.07,.35] }
+    : { day:[.34,.08,.22,.27], date:[.70,.08,.22,.27], hm:[.08,.42,.66,.49], ss:[.79,.57,.15,.34], pm:[.08,.35] };
   const R = a => [a[0]*W, a[1]*H, a[2]*W, a[3]*H];
   drawText(ctx, p.day, ...R(L.day), color, ghost);
   drawText(ctx, p.date, ...R(L.date), color, ghost);
@@ -130,7 +131,7 @@ function drawLCD(ctx,W,H,model,color,ghost){
   ctx.fillRect(cx-r, hy+hh*0.28-r, 2*r, 2*r); ctx.fillRect(cx-r, hy+hh*0.70-r, 2*r, 2*r);
   ctx.restore();
   drawText(ctx, p.ss, ...R(L.ss), color, ghost);
-  ctx.textBaseline='top';
+  ctx.textBaseline='bottom';
   lbl(p.pm ? 'PM' : 'AM', L.pm[0]*W, L.pm[1]*H, Math.max(6,H*0.13));
 }
 
