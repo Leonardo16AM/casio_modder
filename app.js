@@ -29,7 +29,7 @@ let active = 0;
 const imgCache = new Map();
 
 const blankCell = () => ({ fill:'none', img:null, zoom:1, rot:0, ox:0, oy:0, flip:false, fit:'cover',
-  bri:1, con:1, sat:1, gtype:'linear', gang:90, stops:[{c:'#c7d3c0',p:0},{c:'#8fa58a',p:1}], solid:'#c7d3c0' });
+  bri:1, con:1, sat:1, gtype:'linear', gang:90, stops:[{c:'#c7d3c0',p:0},{c:'#8fa58a',p:1}], solid:'#c7d3c0', bgOn:false, bg:'#000000' });
 
 // ---------- helpers ----------
 const $ = id => document.getElementById(id);
@@ -157,6 +157,7 @@ function renderCell(cell, ctx, W, H, { digits=false, pad=0, model=S.model, segCo
     ctx.fillStyle = g; ctx.fillRect(-pad,-pad,fw,fh);
   } else if (cell.fill === 'image'){
     const im = getImage(cell.img);
+    if (cell.bgOn){ ctx.fillStyle = cell.bg||'#000000'; ctx.fillRect(-pad,-pad,fw,fh); }
     if (im){
       const base = cell.fit === 'contain'
         ? Math.min(W/im.naturalWidth, H/im.naturalHeight)
@@ -260,6 +261,7 @@ function syncControls(){
   $('zoom').value=c.zoom; $('rot').value=c.rot; $('ox').value=c.ox; $('oy').value=c.oy;
   $('bri').value=c.bri; $('con').value=c.con; $('sat').value=c.sat;
   $('gang').value=c.gang; $('solid').value=c.solid;
+  $('bg-on').checked=!!c.bgOn; $('bg').value=c.bg||'#000000';
   $('o-zoom').textContent = (+c.zoom).toFixed(2)+'×'; $('o-rot').textContent = c.rot+'°'; $('o-ang').textContent = c.gang+'°';
   const fill = c.fill==='none' ? (document.querySelector('#fill-seg .active')?.dataset.fill||'image') : c.fill;
   setSeg('fill-seg','fill',fill); showPane(fill);
@@ -344,6 +346,8 @@ function init(){
     });
     rd.readAsDataURL(f); e.target.value='';
   };
+  $('bg-on').onchange = e => edit(c=>{ c.bgOn=e.target.checked; });
+  $('bg').oninput = e => { $('bg-on').checked=true; edit(c=>{ c.bgOn=true; c.bg=e.target.value; }); };
   $('fit-cover').onclick = () => { edit(c=>{c.fit='cover'; c.zoom=1; c.ox=0; c.oy=0;}); syncControls(); };
   $('fit-contain').onclick = () => { edit(c=>{c.fit='contain'; c.zoom=1; c.ox=0; c.oy=0;}); syncControls(); };
   $('flip').onclick = () => edit(c=>{c.flip=!c.flip;});
