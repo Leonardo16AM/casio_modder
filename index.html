@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casio Modder</title>
+<meta name="description" content="Design custom LCD backgrounds for Casio F-91W and A158/A168 watches and print them at real size.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">CASIO</span><span class="logo-sub">MODDER</span>
+  </div>
+  <div class="tagline">LCD BACKGROUND STUDIO · <span class="blue">F-91W</span> · <span class="red">A158 / A168</span></div>
+  <nav class="tabs">
+    <button class="tab active" data-view="sheet">Sheet</button>
+    <button class="tab" data-view="viewer">3D Preview</button>
+    <button class="tab" data-view="guide">Guide</button>
+  </nav>
+</header>
+
+<main>
+  <!-- SHEET VIEW -->
+  <section id="view-sheet" class="view active">
+    <aside class="panel left">
+      <h2><span class="num">01</span> Paper</h2>
+      <label>Sheet format
+        <select id="paper">
+          <option value="A4">A4 · 210 × 297 mm</option>
+          <option value="Letter">US Letter · 216 × 279 mm</option>
+          <option value="A5">A5 · 148 × 210 mm</option>
+          <option value="A3">A3 · 297 × 420 mm</option>
+          <option value="Legal">US Legal · 216 × 356 mm</option>
+        </select>
+      </label>
+      <label>Orientation
+        <select id="orient"><option value="p">Portrait</option><option value="l">Landscape</option></select>
+      </label>
+
+      <h2><span class="num">02</span> Watch</h2>
+      <div class="seg" id="model-seg">
+        <button data-model="F91W" class="active">F-91W</button>
+        <button data-model="A158">A158/A168</button>
+        <button data-model="CUSTOM">Custom</button>
+      </div>
+      <div class="row2">
+        <label>Width (mm)<input type="number" id="cw" step="0.1" min="5" max="80"></label>
+        <label>Height (mm)<input type="number" id="ch" step="0.1" min="5" max="80"></label>
+      </div>
+      <p class="hint" id="model-note"></p>
+
+      <h2><span class="num">03</span> Layout</h2>
+      <div class="row2">
+        <label>Margin (mm)<input type="number" id="margin" value="10" step="1" min="3" max="40"></label>
+        <label>Gap (mm)<input type="number" id="gap" value="4" step="0.5" min="0" max="30"></label>
+      </div>
+      <label>Bleed (mm, extra image outside the cut line)<input type="number" id="bleed" value="0" step="0.25" min="0" max="3"></label>
+      <label class="check"><input type="checkbox" id="cutlines" checked> Print cut outlines</label>
+      <label class="check"><input type="checkbox" id="cropmarks" checked> Print crop marks</label>
+      <label class="check"><input type="checkbox" id="ruler" checked> Print 50 mm calibration ruler</label>
+      <p class="stat" id="grid-stat"></p>
+    </aside>
+
+    <div class="stage">
+      <div class="toolbar">
+        <button id="sel-all" class="ghost">Select all</button>
+        <button id="sel-none" class="ghost">Select none</button>
+        <button id="clear-sel" class="ghost">Clear selected</button>
+        <span class="spacer"></span>
+        <label class="check inline"><input type="checkbox" id="show-digits" checked> Show LCD digits</label>
+        <button id="export" class="primary">Export PDF</button>
+      </div>
+      <div class="paper-wrap" id="paper-wrap"><div class="paper" id="paper-el"></div></div>
+      <p class="hint center">Click a cell to edit it. Shift/Ctrl-click to select several and apply the same design.</p>
+    </div>
+
+    <aside class="panel right" id="editor">
+      <h2><span class="num">04</span> Cell editor <span id="sel-count" class="pill"></span></h2>
+      <div class="preview-box">
+        <canvas id="preview" width="600" height="360"></canvas>
+        <div class="preview-label" id="preview-label">Drag to move · wheel to zoom</div>
+      </div>
+      <label class="check"><input type="checkbox" id="preview-digits" checked> Preview LCD digits over the design</label>
+      <div class="row2">
+        <label>Segment color<input type="color" id="seg-color" value="#1a1a1a"></label>
+        <label>Ghost segments<input type="range" id="ghost" min="0" max="0.4" step="0.01" value="0.08"></label>
+      </div>
+
+      <div class="seg" id="fill-seg">
+        <button data-fill="image" class="active">Photo</button>
+        <button data-fill="gradient">Gradient</button>
+        <button data-fill="solid">Solid</button>
+      </div>
+
+      <div class="fill-pane" data-pane="image">
+        <label class="file">
+          <input type="file" id="file" accept="image/*">
+          <span>Choose photo…</span>
+        </label>
+        <label>Zoom <output id="o-zoom"></output><input type="range" id="zoom" min="0.2" max="6" step="0.01" value="1"></label>
+        <label>Rotate <output id="o-rot"></output><input type="range" id="rot" min="-180" max="180" step="1" value="0"></label>
+        <div class="row2">
+          <label>Offset X<input type="range" id="ox" min="-1" max="1" step="0.005" value="0"></label>
+          <label>Offset Y<input type="range" id="oy" min="-1" max="1" step="0.005" value="0"></label>
+        </div>
+        <div class="row3">
+          <label>Bright<input type="range" id="bri" min="0.3" max="2" step="0.01" value="1"></label>
+          <label>Contrast<input type="range" id="con" min="0.3" max="2" step="0.01" value="1"></label>
+          <label>Saturate<input type="range" id="sat" min="0" max="2.5" step="0.01" value="1"></label>
+        </div>
+        <div class="btns">
+          <button id="fit-cover" class="ghost">Fill</button>
+          <button id="fit-contain" class="ghost">Fit</button>
+          <button id="flip" class="ghost">Flip</button>
+          <button id="reset-img" class="ghost">Reset</button>
+        </div>
+      </div>
+
+      <div class="fill-pane hidden" data-pane="gradient">
+        <div class="seg small" id="gtype-seg">
+          <button data-g="linear" class="active">Linear</button>
+          <button data-g="radial">Radial</button>
+        </div>
+        <div class="stops" id="stops"></div>
+        <div class="btns"><button id="add-stop" class="ghost">+ Stop</button><button id="rand-grad" class="ghost">Random</button></div>
+        <label>Angle <output id="o-ang"></output><input type="range" id="gang" min="0" max="360" step="1" value="90"></label>
+        <div class="presets" id="presets"></div>
+      </div>
+
+      <div class="fill-pane hidden" data-pane="solid">
+        <label>Color<input type="color" id="solid" value="#c7d3c0"></label>
+      </div>
+
+      <div class="btns wide">
+        <button id="copy-all" class="ghost">Copy to all cells</button>
+        <button id="fill-empty" class="ghost">Copy to empty cells</button>
+      </div>
+    </aside>
+  </section>
+
+  <!-- 3D VIEW -->
+  <section id="view-viewer" class="view">
+    <div class="viewer-ui">
+      <div class="seg" id="viewer-model">
+        <button data-vm="F91W" class="active">F-91W</button>
+        <button data-vm="A158">A158 / A168</button>
+      </div>
+      <label class="inline">Design
+        <select id="viewer-cell"></select>
+      </label>
+      <label class="check inline"><input type="checkbox" id="viewer-digits" checked> Digits</label>
+      <label class="check inline"><input type="checkbox" id="viewer-light"> Backlight</label>
+      <label class="check inline"><input type="checkbox" id="viewer-spin" checked> Auto-rotate</label>
+    </div>
+    <div id="three-host"><div class="loading" id="three-loading">Loading 3D engine…</div></div>
+    <p class="hint center">Procedural approximation built in Three.js — drag to orbit, scroll to zoom.</p>
+  </section>
+
+  <!-- GUIDE -->
+  <section id="view-guide" class="view">
+    <article class="guide">
+      <h1>How to mod your LCD</h1>
+      <ol>
+        <li><b>Design.</b> Pick paper and watch model, click cells, add a photo or gradient. The preview overlays the real-time digits so you can check readability — busy, dark areas behind the digits make them hard to read. Light, low-contrast backgrounds work best.</li>
+        <li><b>Export PDF.</b> Every cell is placed at its real size in millimetres.</li>
+        <li><b>Print at 100%.</b> In the print dialog choose <i>Actual size</i> / <i>Scale 100%</i>, never “Fit to page”. Measure the 50 mm calibration ruler — if it isn’t 50 mm, your printer is scaling.</li>
+        <li><b>Cut</b> along the outline with a sharp craft knife and a metal ruler. Glossy photo paper or thin sticker paper gives the cleanest result.</li>
+        <li><b>Open the watch.</b> Remove the 4 caseback screws, lift the module, release the clips holding the LCD frame. Insert your print <i>behind</i> the LCD glass (the reflector sits there on the F-91W — the print replaces or sits on top of it).</li>
+        <li><b>Test fit</b> before closing. Trim a fraction of a millimetre at a time if it buckles.</li>
+      </ol>
+      <h2>About the sizes</h2>
+      <p>Casio does not publish LCD insert dimensions. The defaults (<b>F-91W: 23.0 × 14.0 mm</b>, <b>A158/A168: 25.0 × 15.0 mm</b>) are approximations of the visible LCD window. Modules vary between production runs, so measure your own LCD glass with calipers and type the exact size into the <i>Custom</i> fields. Case references: F-91W 38.2 × 35.2 × 8.5 mm (module 593), A158 38.6 × 36.3 × 9.6 mm.</p>
+      <h2>Tips</h2>
+      <ul>
+        <li>Print a test sheet with a few sizes (e.g. ±0.5 mm) and keep the best fit.</li>
+        <li>The polarizer darkens everything slightly: brighten your images by 10–20%.</li>
+        <li>Opening a watch voids water resistance unless you reseal the gasket properly.</li>
+      </ul>
+      <p class="disclaimer">Fan project. Not affiliated with or endorsed by CASIO Computer Co., Ltd. CASIO, F-91W, A158 and A168 are trademarks of their owner.</p>
+    </article>
+  </section>
+</main>
+
+<script src="app.js"></script>
+<script type="module" src="viewer.js"></script>
+</body>
+</html>
