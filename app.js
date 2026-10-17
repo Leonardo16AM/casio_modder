@@ -6,8 +6,8 @@
 const PAPERS = { A4:[210,297], Letter:[215.9,279.4], A5:[148,210], A3:[297,420], Legal:[215.9,355.6] };
 // Approximate visible LCD window sizes (mm). Casio publishes no insert sizes — users can override.
 const MODELS = {
-  F91W: { w:23.0, h:14.0, note:'F-91W (module 593). Approx. 23.0 × 14.0 mm visible LCD — measure your own glass and fine-tune.' },
-  A158: { w:25.0, h:15.0, note:'A158W / A168W (module 593 / 3298). Approx. 25.0 × 15.0 mm — measure and fine-tune.' },
+  F91W: { w:21.0, h:11.0, note:'F-91W (module 593). 21 × 11 mm measured screen.' },
+  A158: { w:23.5, h:12.5, note:'A158W / A168W. Approx. 23.5 × 12.5 mm, estimated from photos — measure yours and fine-tune.' },
   CUSTOM: { note:'Enter the exact size you measured with calipers.' },
 };
 const PRESETS = [
@@ -15,11 +15,11 @@ const PRESETS = [
   ['#a1c4fd','#c2e9fb'],['#d4fc79','#96e6a1'],['#fbc2eb','#a6c1ee'],['#e0c3fc','#8ec5fc'],
   ['#fdfbfb','#ebedee'],['#1e50ff','#e60012'],['#43e97b','#38f9d7'],['#fa709a','#fee140'],
 ];
-const STORE_KEY = 'casio-modder-v1';
+const STORE_KEY = 'casio-modder-v2';
 
 // ---------- state ----------
 const S = {
-  paper:'A4', orient:'p', model:'F91W', cw:23, ch:14, margin:10, gap:4, bleed:0,
+  paper:'A4', orient:'p', model:'F91W', cw:21, ch:11, margin:10, gap:4, bleed:0,
   cutlines:true, cropmarks:true, ruler:true, showDigits:true,
   segColor:'#1a1a1a', ghost:0.08,
   cells:[], images:{}, // images: id -> dataURL
@@ -229,7 +229,6 @@ function refreshAll(){
   for (let i=0;i<n;i++) refreshCell(i);
   drawPreview();
   $('sel-count').textContent = selected.size > 1 ? `${selected.size} selected` : `#${active+1}`;
-  window.dispatchEvent(new CustomEvent('cm-change'));
 }
 function onCellClick(i,e){
   if (e.shiftKey || e.ctrlKey || e.metaKey){
@@ -381,7 +380,6 @@ function init(){
   document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
     document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
     document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id==='view-'+t.dataset.view));
-    window.dispatchEvent(new CustomEvent('cm-view', {detail:t.dataset.view}));
   });
   window.addEventListener('resize', ()=>{ clearTimeout(init._r); init._r=setTimeout(buildSheet,150); });
   // keep digits ticking like a real watch
@@ -450,19 +448,5 @@ function exportPDF(){
   doc.save(`casio-mod-${S.model}-${S.paper}.pdf`);
 }
 
-// ---------- public API for the 3D viewer ----------
-window.CM = {
-  get state(){ return S; },
-  filledIndices(){ return S.cells.map((c,i)=>[c,i]).filter(([c])=>c.fill!=='none').map(([,i])=>i); },
-  /** Renders a cell to a canvas (with optional digits) for use as a texture. */
-  renderTexture(i, model, digits, canvas){
-    const W = 1024, H = Math.round(1024*S.ch/S.cw);
-    canvas.width=W; canvas.height=H;
-    const ctx = canvas.getContext('2d');
-    const cell = S.cells[i] || blankCell();
-    renderCell(cell.fill==='none' ? {...blankCell(), fill:'solid'} : cell, ctx, W, H, { digits, model, empty:false });
-    return canvas;
-  },
-};
 document.addEventListener('DOMContentLoaded', init);
 })();
